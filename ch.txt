@@ -1,0 +1,91 @@
+1. Развертывание ClickHouse
+	1. Запуск ClickHouse с помощью Docker:
+ 	    docker run -d --name clickhouse-server --ulimit nofile=262144:262144 -p 8123:8123 -p 9000:9000 clickhouse/clickhouse-server
+2. Импорт тестовой базы данных
+	1. Создание базы данных:
+	    CREATE DATABASE test_db;
+	2. Импорт данных:
+        CREATE TABLE test_db.hits_v1
+        (
+            WatchID UInt64,
+            JavaEnable UInt8,
+            Title String,
+            GoodEvent Int16,
+            EventTime DateTime,
+            EventDate Date,
+            CounterID UInt32,
+            ClientIP UInt32,
+            RegionID UInt32,
+            UserAgent UInt8,
+            URL String,
+            Referer String,
+            ResolutionWidth UInt16,
+            ResolutionHeight UInt16,
+            ResolutionDepth UInt8,
+            FlashMajor UInt8,
+            FlashMinor UInt8,
+            FlashMinor2 String,
+            NetMajor UInt8,
+            NetMinor UInt8,
+            UserAgentMajor UInt16,
+            UserAgentMinor FixedString(2),
+            CookieEnable UInt8,
+            JavascriptEnable UInt8,
+            IsMobile UInt8,
+            MobilePhone UInt8,
+            MobilePhoneModel String,
+            Params String,
+            IPNetworkID UInt32,
+            TraficSourceID Int8,
+            SearchEngineID UInt16,
+            SearchPhrase String,
+            AdvEngineID UInt8,
+            IsArtifical UInt8,
+            WindowClientWidth UInt16,
+            WindowClientHeight UInt16,
+            ClientTimeZone Int16,
+            ClientEventTime DateTime,
+            SilverlightVersion1 UInt8,
+            SilverlightVersion2 UInt8,
+            SilverlightVersion3 UInt32,
+            SilverlightVersion4 UInt16,
+            PageCharset String,
+            CodeVersion UInt32,
+            IsLink UInt8,
+            IsDownload UInt8,
+            IsNotBounce UInt8,
+            FUniqID UInt64,
+            OriginalURL String,
+            HID UInt32,
+            IsOldCounter UInt8,
+            IsEvent UInt8,
+            IsParameter UInt8,
+            DontCountHits UInt8,
+            WithHash UInt8
+        )
+        ENGINE = MergeTree()
+        PARTITION BY toYYYYMM(EventDate)
+        ORDER BY (CounterID, EventDate);
+    3. Загрузка данных:
+        curl -O https://datasets.clickhouse.com/hits/tsv/hits_v1.tsv.gz gunzip hits_v1.tsv.gz cat hits_v1.tsv | docker exec -i clickhouse-server clickhouse-client --query="INSERT INTO test_db.hits_v1 FORMAT TabSeparated"
+
+3. Выполнение запросов и оценка скорости
+    1. Количество уникальных событий:
+        SELECT COUNT(DISTINCT WatchID) FROM test_db.hits_v1;
+    2. События по дате:
+        SELECT EventDate, COUNT(*) FROM test_db.hits_v1 GROUP BY EventDate ORDER BY EventDate;
+    3. Первые 10 событий
+        SELECT * FROM test_db.hits_v1 LIMIT 10;
+    
+    Результаты:
+        COUNT(DISTINCT WatchID) 0.5c
+        Events per Date 0.7c
+        First 10 Events 0.3c
+
+
+4. Развертывание ClickHouse в кластерном исполнении
+    1. Запуск нескольких инстансов
+        docker run -d --name clickhouse-server-1 --ulimit nofile=262144:262144 -p 9001:9000 clickhouse/clickhouse-server
+        docker run -d --name clickhouse-server-2 --ulimit nofile=262144:262144 -p 9002:9000 clickhouse/clickhouse-server
+    2. Конфигурация кластера:
+        В файле конфигурации /etc/clickhouse-server/config.xml каждого инстанса добавляем информацию о кластере.
