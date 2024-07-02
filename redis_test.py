@@ -22,7 +22,10 @@ def measure_time(write_func, read_func):
     read_func()
     read_time = time.time() - start_time
 
-    return write_time, read_time
+    return {
+        "w": write_time,
+        "r": read_time
+    }
 
 
 def write_string():
@@ -75,5 +78,4 @@ def read_list():
 
 report['List'] = measure_time(write_list, read_list)
 
-# Печать отчета
 print(json.dumps(report, indent=4))
