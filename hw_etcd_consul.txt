@@ -1,0 +1,14 @@
+1. Развертывание кластера Etcd
+    1. Запуск кластера
+        docker-compose -f docker-compose-etcd.yml up -d
+    2. Проверка отказоустойчивости
+        docker exec -it <etcd-container-id> etcdctl endpoint status --write-out=table
+        docker stop <etcd-container-id>
+        docker exec -it <another-etcd-container-id> etcdctl endpoint status --write-out=table
+
+2. Развертывание кластера Consul
+    1. Запуск кластера
+        docker-compose -f docker-compose-consul.yml up -d
+    2. Проверка отказоустойчивости
+        docker stop <consul-container-id>
+        docker exec -it <another-consul-container-id> consul members
