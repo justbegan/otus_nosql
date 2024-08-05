@@ -1,0 +1,44 @@
+1. docker-compose -f docker-compose_cassandra.yml up -d 
+
+2.	
+    1. docker exec -it cassandra1 cqlsh
+	2. CREATE KEYSPACE my_keyspace WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 3};
+	3. CREATE TABLE my_keyspace.table1 (
+            part1 int,
+            part2 int,
+            clust1 int,
+            non_key_field text,
+            PRIMARY KEY ((part1, part2), clust1)
+        );
+
+        CREATE TABLE my_keyspace.table2 (
+            id int PRIMARY KEY,
+            data text
+        );
+3. 
+    -- Вставка данных в table1
+    INSERT INTO my_keyspace.table1 (part1, part2, clust1, non_key_field) VALUES (1, 1, 1, 'data1');
+    INSERT INTO my_keyspace.table1 (part1, part2, clust1, non_key_field) VALUES (1, 1, 2, 'data2');
+    INSERT INTO my_keyspace.table1 (part1, part2, clust1, non_key_field) VALUES (2, 1, 1, 'data3');
+
+    -- Вставка данных в table2
+    INSERT INTO my_keyspace.table2 (id, data) VALUES (1, 'data1');
+    INSERT INTO my_keyspace.table2 (id, data) VALUES (2, 'data2');
+    INSERT INTO my_keyspace.table2 (id, data) VALUES (3, 'data3');
+
+4.  
+    -- Запрос с использованием WHERE
+    SELECT * FROM my_keyspace.table1 WHERE part1 = 1 AND part2 = 1;
+
+    -- Запрос с использованием WHERE и clustering key
+    SELECT * FROM my_keyspace.table1 WHERE part1 = 1 AND part2 = 1 AND clust1 = 1;
+
+    -- Запрос на вторую таблицу
+    SELECT * FROM my_keyspace.table2 WHERE id = 1;
+
+5. 
+    -- Создание вторичного индекса на поле non_key_field
+    CREATE INDEX ON my_keyspace.table1 (non_key_field);
+
+    -- Запрос с использованием вторичного индекса
+    SELECT * FROM my_keyspace.table1 WHERE non_key_field = 'data1';
